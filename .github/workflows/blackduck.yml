@@ -1,0 +1,41 @@
+name: Black Duck Scan
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  blackduck-scan:
+    name: Run Black Duck Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Black Duck Detect
+        uses: blackducksoftware/detect-action@v1
+        with:
+          blackduck_api_token: ${{ secrets.BLACKDUCK_API_TOKEN }}
+          blackduck_url: ${{ secrets.BLACKDUCK_URL }}
+          # You can also set additional parameters if needed
+          # e.g., detect_scan: true, detect_project_name: 'your-project-name'
+
+      - name: Run Black Duck Detect
+        run: |
+          detect --blackduck.api.token=${{ secrets.BLACKDUCK_API_TOKEN }} \
+                 --blackduck.url=${{ secrets.BLACKDUCK_URL }} \
+                 --detect.project.name=${{ github.event.repository.name }} \
+                 --detect.project.version.name= STAGE
+        env:
+          BLACKDUCK_API_TOKEN: ${{ secrets.BLACKDUCK_API_TOKEN }}
+          BLACKDUCK_URL: ${{ secrets.BLACKDUCK_URL }}
+
+      - name: Upload Black Duck results
+        uses: actions/upload-artifact@v3
+        with:
+          name: blackduck-results
+          path: ./blackduck-results/
